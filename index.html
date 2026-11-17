@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="format-detection" content="telephone=no">
+<title>塩分センサ測定電位の換算表（B法）</title>
+<style>
+:root{--in:#ffffcc;--out:#ffc000;--line:#999;--bg:#f4f5f7;--ink:#1d1d1f;--sub:#666}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--ink);font-family:-apple-system,"Hiragino Sans","Hiragino Kaku Gothic ProN","Yu Gothic",sans-serif;-webkit-text-size-adjust:100%}
+.wrap{max-width:960px;margin:0 auto;padding:16px 16px calc(24px + env(safe-area-inset-bottom))}
+h1{font-size:20px;margin:4px 0 14px;text-align:center}
+.card{background:#fff;border-radius:12px;padding:14px;margin-bottom:14px;box-shadow:0 1px 3px rgba(0,0,0,.08)}
+.head{display:grid;grid-template-columns:repeat(2,1fr);gap:10px 16px}
+.head label{display:flex;flex-direction:column;font-size:13px;color:var(--sub);gap:4px}
+.head input{font-size:17px;padding:10px;border:1px solid #ccc;border-radius:8px;background:var(--in);width:100%;min-height:44px}
+.head .full{grid-column:1/-1}
+.head .ro{background:#eee}
+table{width:100%;border-collapse:collapse;font-size:16px}
+th,td{border:1px solid var(--line);padding:0;text-align:center}
+th{background:#e9edf3;font-size:13px;font-weight:600;padding:6px 4px;line-height:1.3}
+td.no{width:44px;color:var(--sub);font-size:13px;background:#fafafa}
+td input{width:100%;border:0;background:var(--in);font-size:17px;text-align:center;padding:10px 4px;min-height:44px;border-radius:0}
+td input:focus{outline:2px solid #2f6fdb;outline-offset:-2px}
+td.calc{padding:10px 6px;font-variant-numeric:tabular-nums}
+td.res{background:#fff3cc;font-weight:700}
+td.res.has{background:var(--out)}
+.btns{display:flex;flex-wrap:wrap;gap:10px;margin-top:12px}
+button{font-size:16px;padding:12px 16px;border-radius:10px;border:1px solid #bbb;background:#fff;min-height:44px}
+button.pri{background:#2f6fdb;color:#fff;border-color:#2f6fdb}
+button.warn{color:#c0392b;border-color:#e3a39b}
+.note{font-size:12px;color:var(--sub);line-height:1.6}
+.legend{display:flex;gap:14px;font-size:12px;color:var(--sub);margin:6px 0 10px}
+.legend span::before{content:"";display:inline-block;width:12px;height:12px;margin-right:4px;vertical-align:-2px;border:1px solid #aaa}
+.legend .i::before{background:var(--in)} .legend .o::before{background:var(--out)}
+@media (max-width:600px){.head{grid-template-columns:1fr}th{font-size:11px}td input{font-size:16px}}
+@media print{
+  @page{size:A4 portrait;margin:0}
+  html,body{background:#fff}
+  .wrap{display:none}
+  #sheet{position:static!important;left:auto!important;width:210mm!important;height:auto!important;padding:10mm 13mm!important}
+  #sheet td{height:15.5px!important}
+  #sheet h2{margin-bottom:12px!important}
+}
+#sheet{position:fixed;left:-10000px;top:0;width:794px;height:1123px;background:#fff;color:#000;padding:48px 52px;font-family:-apple-system,"Hiragino Sans","Hiragino Kaku Gothic ProN","Yu Gothic",sans-serif}
+#sheet h2{font-size:18px;text-align:center;margin:0 0 18px;letter-spacing:.05em}
+#sheet .hd{display:grid;grid-template-columns:1fr 1fr;gap:6px 24px;font-size:12px;margin-bottom:14px}
+#sheet .hd div{display:flex;border-bottom:1px solid #555;padding:3px 0}
+#sheet .hd b{font-weight:600;width:6.5em;flex:none}
+#sheet .hd .f{grid-column:1/-1}
+#sheet table{width:100%;border-collapse:collapse;font-size:11px;table-layout:fixed}
+#sheet th,#sheet td{border:1px solid #333;text-align:center;height:16.5px;padding:0 3px;background:none}
+#sheet th{background:#eee;font-size:10px;height:auto;padding:4px 2px;line-height:1.3}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>塩分センサ測定電位の換算表（B法）</h1>
+
+  <div class="card">
+    <div class="head">
+      <label class="full">調査名<input id="h_name" type="text"></label>
+      <label class="full">調査場所<input id="h_place" type="text"></label>
+      <label>試料採取日<input id="h_sdate" type="date"></label>
+      <label>外気温(℃)<input id="h_temp" type="text" inputmode="decimal"></label>
+      <label>測定日<input id="h_mdate" type="date"></label>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="legend"><span class="i">入力セル</span><span class="o">計算結果</span></div>
+    <table>
+      <thead><tr>
+        <th></th><th>試験体<br>(No.)</th><th>採取深さ<br>(mm)</th><th>溶液温度<br>(℃)</th><th>電位差<br>(mV)</th><th>モル濃度<br>(mol/l)</th><th>塩化物イオン濃度<br>(kg/m³)</th>
+      </tr></thead>
+      <tbody id="rows"></tbody>
+    </table>
+    <div class="btns">
+      <button id="addRow">＋ 行を追加</button>
+      <button id="csv">CSV保存</button>
+      <button class="pri" id="pdf">印刷（A4）</button>
+      <button id="copy">表をコピー（Excelに貼付け可）</button>
+      <button class="warn" id="clear">全消去</button>
+    </div>
+    <p class="note" id="msg" aria-live="polite"></p>
+  </div>
+
+  <p class="note screen">
+    計算式（元のExcelと同一）<br>
+    モル濃度 = 10^( −5.639 × 電位差 ÷ (溶液温度 + 273.15) + 0.7111 )<br>
+    塩化物イオン濃度 = モル濃度 × 4 × 35.45 × 2.3<br>
+    ※溶液温度と電位差の両方が入力された行のみ計算します。入力内容はこの端末のブラウザに自動保存されます。
+  </p>
+</div>
+
+<div id="sheet" aria-hidden="true"></div>
+<script>
+(function(){
+  var KEY='enbun_b_v1', MAX=50, INIT=10;
+  var tbody=document.getElementById('rows');
+  var heads=['h_name','h_place','h_sdate','h_temp','h_mdate'];
+  var state={h:{},rows:[]};
+
+  function load(){
+    try{var s=localStorage.getItem(KEY); if(s) state=JSON.parse(s);}catch(e){}
+    if(!state.h) state.h={};
+    if(!state.rows||!state.rows.length){state.rows=[];for(var i=0;i<INIT;i++)state.rows.push(['','','','']);}
+    if(!state.h.h_mdate) state.h.h_mdate=today();
+  }
+  function save(){try{localStorage.setItem(KEY,JSON.stringify(state));}catch(e){}}
+  function today(){var d=new Date();return d.getFullYear()+'-'+('0'+(d.getMonth()+1)).slice(-2)+'-'+('0'+d.getDate()).slice(-2);}
+  function num(v){v=String(v).trim().replace(/[０-９．－]/g,function(c){return c==='．'?'.':c==='－'?'-':String.fromCharCode(c.charCodeAt(0)-0xFEE0);}).replace(/[−ー]/g,'-');
+    if(v===''||isNaN(v))return null;return parseFloat(v);}
+  function calc(t,e){
+    t=num(t);e=num(e);if(t===null||e===null)return null;
+    var mol=Math.pow(10,-5.639*e/(t+273.15)+0.7111);
+    return {mol:mol,cl:mol*4*35.45*2.3};
+  }
+  function fmt(v,d){if(v===null)return '';var s=Math.abs(v).toFixed(d);return v<0?'('+s+')':s;}
+
+  function render(){
+    tbody.innerHTML='';
+    state.rows.forEach(function(r,i){
+      var tr=document.createElement('tr');
+      var td=document.createElement('td');td.className='no';td.textContent=i+1;tr.appendChild(td);
+      for(var c=0;c<4;c++){
+        td=document.createElement('td');
+        var inp=document.createElement('input');
+        inp.type='text';inp.inputMode=(c===0)?'text':'decimal';
+        inp.value=r[c];inp.dataset.r=i;inp.dataset.c=c;
+        inp.autocomplete='off';inp.setAttribute('autocorrect','off');inp.setAttribute('autocapitalize','off');
+        td.appendChild(inp);tr.appendChild(td);
+      }
+      var g=document.createElement('td');g.className='calc mol';tr.appendChild(g);
+      var h=document.createElement('td');h.className='calc res';tr.appendChild(h);
+      tbody.appendChild(tr);
+      update(i);
+    });
+    document.getElementById('addRow').disabled=state.rows.length>=MAX;
+  }
+  function update(i){
+    var tr=tbody.children[i],r=state.rows[i],res=calc(r[2],r[3]);
+    tr.querySelector('.mol').textContent=res?fmt(res.mol,3):'';
+    var h=tr.querySelector('.res');h.textContent=res?fmt(res.cl,2):'';
+    h.classList.toggle('has',!!res);
+    tr.classList.toggle('empty',r.join('')==='');
+  }
+
+  tbody.addEventListener('input',function(ev){
+    var t=ev.target;if(!t.dataset)return;
+    var i=+t.dataset.r,c=+t.dataset.c;state.rows[i][c]=t.value;update(i);save();
+  });
+  tbody.addEventListener('keydown',function(ev){
+    if(ev.key!=='Enter')return;ev.preventDefault();
+    var t=ev.target,i=+t.dataset.r,c=+t.dataset.c;
+    var nx=tbody.querySelector('input[data-r="'+(c<3?i:i+1)+'"][data-c="'+(c<3?c+1:0)+'"]');
+    if(nx)nx.focus();else t.blur();
+  });
+  heads.forEach(function(id){
+    var el=document.getElementById(id);
+    el.addEventListener('input',function(){state.h[id]=el.value;save();});
+  });
+
+  document.getElementById('addRow').onclick=function(){
+    var n=Math.min(5,MAX-state.rows.length);for(var k=0;k<n;k++)state.rows.push(['','','','']);save();render();
+  };
+  var msg=document.getElementById('msg'),armed=0;
+  function say(t){msg.textContent=t;}
+  var clr=document.getElementById('clear');
+  clr.onclick=function(){
+    if(!armed){armed=1;clr.textContent='もう一度押すと全消去';setTimeout(function(){armed=0;clr.textContent='全消去';},3000);return;}
+    armed=0;clr.textContent='全消去';
+    state={h:{h_mdate:today()},rows:[]};for(var i=0;i<INIT;i++)state.rows.push(['','','','']);
+    save();fillHead();render();say('消去しました。');
+  };
+  function table(sep){
+    var q=function(v){v=String(v==null?'':v);return (sep===','&&/[",\n]/.test(v))?'"'+v.replace(/"/g,'""')+'"':v.replace(/[\t\n]/g,' ');};
+    var L=[];
+    L.push(['塩分センサ測定電位の換算表（B法）']);
+    L.push(['調査名',state.h.h_name||'','試料採取日',state.h.h_sdate||'']);
+    L.push(['調査場所',state.h.h_place||'','外気温(℃)',state.h.h_temp||'']);
+    L.push(['','','測定日',state.h.h_mdate||'']);
+    L.push([]);
+    L.push(['試験体(No.)','採取深さ(mm)','溶液温度(℃)','電位差(mV)','モル濃度(mol/l)','塩化物イオン濃度(kg/m3)']);
+    state.rows.forEach(function(r){
+      if(r.join('')==='')return;var res=calc(r[2],r[3]);
+      L.push([r[0],r[1],r[2],r[3],res?res.mol.toFixed(3):'',res?res.cl.toFixed(2):'']);
+    });
+    return L.map(function(a){return a.map(q).join(sep);}).join('\r\n');
+  }
+  document.getElementById('copy').onclick=function(){
+    var t=table('\t');
+    function fb(){var ta=document.createElement('textarea');ta.value=t;ta.style.position='fixed';ta.style.opacity='0';document.body.appendChild(ta);ta.select();
+      var ok=false;try{ok=document.execCommand('copy');}catch(e){}ta.remove();say(ok?'コピーしました。Excelのセルに貼り付けてください。':'コピーできませんでした。');}
+    try{navigator.clipboard.writeText(t).then(function(){say('コピーしました。Excelのセルに貼り付けてください。');},fb);}catch(e){fb();}
+  };
+  var csvBtn=document.getElementById('csv');
+  var pdfBtn=document.getElementById('pdf');
+  function esc(v){return String(v==null?'':v).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];});}
+  function jd(v){if(!v)return '';var p=v.split('-');return p.length===3?p[0]+'年'+(+p[1])+'月'+(+p[2])+'日':v;}
+  function buildSheet(){
+    var last=0;state.rows.forEach(function(r,i){if(r.join('')!=='')last=i+1;});
+    var n=Math.min(50,Math.max(10,last));
+    var h='<h2>塩分センサ測定電位の換算表（B法）</h2><div class="hd">'+
+      '<div class="f"><b>調査名</b>'+esc(state.h.h_name)+'</div>'+
+      '<div class="f"><b>調査場所</b>'+esc(state.h.h_place)+'</div>'+
+      '<div><b>試料採取日</b>'+esc(jd(state.h.h_sdate))+'</div>'+
+      '<div><b>外気温(℃)</b>'+esc(state.h.h_temp)+'</div>'+
+      '<div><b>測定日</b>'+esc(jd(state.h.h_mdate))+'</div><div style="border:0"></div></div>'+
+      '<table><thead><tr><th>試験体<br>(No.)</th><th>採取深さ<br>(mm)</th><th>溶液温度<br>(℃)</th><th>電位差<br>(mV)</th><th>モル濃度<br>(mol/l)</th><th>塩化物イオン濃度<br>(kg/m³)</th></tr></thead><tbody>';
+    for(var i=0;i<n;i++){
+      var r=state.rows[i]||['','','',''],res=calc(r[2],r[3]);
+      h+='<tr><td>'+esc(r[0])+'</td><td>'+esc(r[1])+'</td><td>'+esc(r[2])+'</td><td>'+esc(r[3])+'</td><td>'+(res?fmt(res.mol,3):'')+'</td><td>'+(res?fmt(res.cl,2):'')+'</td></tr>';
+    }
+    document.getElementById('sheet').innerHTML=h+'</tbody></table>';
+  }
+  pdfBtn.onclick=function(){buildSheet();window.print();};
+  window.addEventListener('beforeprint',buildSheet);
+  csvBtn.onclick=function(){
+    var name='塩分換算B法_'+(state.h.h_name||'無題')+'_'+(state.h.h_mdate||today())+'.csv';
+    var blob=new Blob(['\ufeff'+table(',')],{type:'text/csv'});
+    var f=null;try{f=new File([blob],name,{type:'text/csv'});}catch(e){}
+    if(f&&navigator.canShare&&navigator.canShare({files:[f]})){navigator.share({files:[f]}).catch(function(){});return;}
+    var a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=name;document.body.appendChild(a);a.click();
+    setTimeout(function(){URL.revokeObjectURL(a.href);a.remove();},1000);
+  };
+
+  function fillHead(){heads.forEach(function(id){document.getElementById(id).value=state.h[id]||'';});}
+  load();fillHead();render();save();
+})();
+</script>
+</body>
+</html>
