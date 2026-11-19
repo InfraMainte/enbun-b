@@ -35,13 +35,26 @@ button.warn{color:#c0392b;border-color:#e3a39b}
 .legend{display:flex;gap:14px;font-size:12px;color:var(--sub);margin:6px 0 10px}
 .legend span::before{content:"";display:inline-block;width:12px;height:12px;margin-right:4px;vertical-align:-2px;border:1px solid #aaa}
 .legend .i::before{background:var(--in)} .legend .o::before{background:var(--out)}
+.qk{display:flex;flex-wrap:wrap;gap:8px;margin:8px 0}
+.qk button{padding:10px 14px;font-size:16px}
+.qk button.g{background:#1d1d1f;color:#fff;border-color:#1d1d1f}
+.qk input,.qk select{width:auto;flex:1 1 120px;min-width:0;font-size:16px;padding:10px;border:1px solid #ccc;border-radius:8px;min-height:44px;background:#fff}
+.qk input.s{flex:0 0 76px;text-align:center}
+.qk span{align-self:center;font-size:14px;color:var(--sub)}
+.sec{font-size:13px;font-weight:600;margin-top:14px;color:var(--ink)}
+details.tpl summary{font-size:15px;font-weight:600;cursor:pointer;min-height:32px}
+.tpl textarea{width:100%;font-size:16px;padding:10px;border:1px solid #ccc;border-radius:8px;min-height:130px;font-family:inherit;line-height:1.5}
+.tpl label{display:block;font-size:13px;color:var(--sub);margin-top:10px}
+.tpl input{width:100%;font-size:16px;padding:10px;border:1px solid #ccc;border-radius:8px;min-height:44px}
+td.c0{min-width:9.5em} td.c0 input{text-align:left;padding-left:8px}
+tr.gs td{border-top:2px solid #555} tr.gg td{border-top:3px solid #1d1d1f}
+tr.alt td.c0 input,tr.alt td.c1 input{background:#f3f0c8}
 @media (max-width:600px){.head{grid-template-columns:1fr}th{font-size:11px}td input{font-size:16px}}
 @media print{
   @page{size:A4 portrait;margin:0}
   html,body{background:#fff}
   .wrap{display:none}
   #sheet{position:static!important;left:auto!important;width:210mm!important;height:auto!important;padding:10mm 13mm!important}
-  #sheet td{height:15.5px!important}
   #sheet h2{margin-bottom:12px!important}
 }
 #sheet{position:fixed;left:-10000px;top:0;width:794px;height:1123px;background:#fff;color:#000;padding:48px 52px;font-family:-apple-system,"Hiragino Sans","Hiragino Kaku Gothic ProN","Yu Gothic",sans-serif}
@@ -51,7 +64,8 @@ button.warn{color:#c0392b;border-color:#e3a39b}
 #sheet .hd b{font-weight:600;width:6.5em;flex:none}
 #sheet .hd .f{grid-column:1/-1}
 #sheet table{width:100%;border-collapse:collapse;font-size:11px;table-layout:fixed}
-#sheet th,#sheet td{border:1px solid #333;text-align:center;height:16.5px;padding:0 3px;background:none}
+#sheet th,#sheet td{border:1px solid #333;text-align:center;padding:0 3px;background:none}
+#sheet tr.gs td{border-top:1.5px solid #000}#sheet tr.gg td{border-top:2.5px solid #000}
 #sheet th{background:#eee;font-size:10px;height:auto;padding:4px 2px;line-height:1.3}
 </style>
 </head>
@@ -67,6 +81,42 @@ button.warn{color:#c0392b;border-color:#e3a39b}
       <label>外気温(℃)<input id="h_temp" type="text" inputmode="decimal"></label>
       <label>測定日<input id="h_mdate" type="date"></label>
     </div>
+  </div>
+
+  <div class="card">
+    <details class="tpl" id="tplBox">
+      <summary>調査箇所の一括作成（クイック入力）</summary>
+      <div class="sec">保存した調査パターン</div>
+      <div class="qk">
+        <select id="patSel"><option value="">― パターンを選択 ―</option></select>
+        <button id="patLoad">呼出</button><button class="warn" id="patDel">削除</button>
+      </div>
+      <div class="sec">調査箇所</div>
+      <div class="qk">
+        <span>記号</span><input class="s" id="qPre" type="text" value="G">
+        <button class="g" id="qGrp">＋次のグループ</button>
+      </div>
+      <div class="qk" id="qLabels"></div>
+      <div class="qk">
+        <input id="qCustom" type="text" placeholder="その他の箇所名（例：ひび割れ部）">
+        <button id="qCustomAdd">追加</button><button id="qUndo">1つ戻す</button>
+      </div>
+      <textarea id="tplText"></textarea>
+      <div class="sec">深度（mm）</div>
+      <div class="qk">
+        <span>開始</span><input class="s" id="dS" type="text" inputmode="decimal" value="0">
+        <span>ピッチ</span><input class="s" id="dP" type="text" inputmode="decimal" value="20">
+        <span>段数</span><input class="s" id="dN" type="text" inputmode="numeric" value="3">
+        <button id="dMake">深度を作成</button>
+      </div>
+      <input id="tplDepth" type="text">
+      <div class="btns">
+        <button class="pri" id="tplMake">この内容で表を作成</button>
+        <button id="patSave">パターンとして保存</button>
+      </div>
+      <p class="note" id="msg2" aria-live="polite" style="font-weight:600;color:#2f6fdb"></p>
+      <p class="note">同じ箇所名を2回押すと自動で①②…と番号が付きます。作成すると表の内容は置き換わります（入力済みの測定値がある場合は2回押しで確定）。保存したパターンはこの端末に残り、全消去しても消えません。</p>
+    </details>
   </div>
 
   <div class="card">
@@ -98,7 +148,9 @@ button.warn{color:#c0392b;border-color:#e3a39b}
 <div id="sheet" aria-hidden="true"></div>
 <script>
 (function(){
-  var KEY='enbun_b_v1', MAX=50, INIT=10;
+  var KEY='enbun_b_v1', MAX=90, INIT=10;
+  var DEF_TPL='G1：健全部、補修部、劣化部①、劣化部②\nG2：健全部、劣化部①、劣化部②、劣化部③\nG3：健全部、劣化部①、劣化部②\nG4：健全部、補修部、劣化部\nG5：健全部、補修部、劣化部';
+  var DEF_DEP='0～20、20～40、40～60';
   var tbody=document.getElementById('rows');
   var heads=['h_name','h_place','h_sdate','h_temp','h_mdate'];
   var state={h:{},rows:[]};
@@ -106,8 +158,31 @@ button.warn{color:#c0392b;border-color:#e3a39b}
   function load(){
     try{var s=localStorage.getItem(KEY); if(s) state=JSON.parse(s);}catch(e){}
     if(!state.h) state.h={};
-    if(!state.rows||!state.rows.length){state.rows=[];for(var i=0;i<INIT;i++)state.rows.push(['','','','']);}
+    if(state.tpl==null)state.tpl=DEF_TPL;
+    if(state.dep==null)state.dep=DEF_DEP;
+    var blank=!state.rows||!state.rows.length||state.rows.every(function(r){return r.join('')==='';});
+    if(blank)state.rows=makeRows(state.tpl,state.dep);
+    if(!state.rows.length){for(var i=0;i<INIT;i++)state.rows.push(['','','','']);}
     if(!state.h.h_mdate) state.h.h_mdate=today();
+  }
+  function split(v){return String(v).split(/[、，,\s]+/).map(function(x){return x.trim();}).filter(Boolean);}
+  function makeRows(tpl,dep){
+    var rows=[],ds=split(dep);if(!ds.length)ds=[''];
+    String(tpl).split(/\r?\n/).forEach(function(line){
+      line=line.trim();if(!line)return;
+      var m=line.match(/^(.+?)[：:](.*)$/),g=m?m[1].trim():'',items=m?split(m[2]):[line];
+      if(!items.length)items=[g];
+      items.forEach(function(it){
+        var name=(g&&it!==g)?g+' '+it:it;
+        ds.forEach(function(d){rows.push([name,d,'','']);});
+      });
+    });
+    return rows.slice(0,MAX);
+  }
+  function grp(v){return String(v).split(' ')[0];}
+  function sepCls(i){
+    if(i===0)return '';var a=state.rows[i-1][0],b=state.rows[i][0];
+    if(!a||!b||a===b)return '';return grp(a)!==grp(b)?'gg':'gs';
   }
   function save(){try{localStorage.setItem(KEY,JSON.stringify(state));}catch(e){}}
   function today(){var d=new Date();return d.getFullYear()+'-'+('0'+(d.getMonth()+1)).slice(-2)+'-'+('0'+d.getDate()).slice(-2);}
@@ -124,9 +199,11 @@ button.warn{color:#c0392b;border-color:#e3a39b}
     tbody.innerHTML='';
     state.rows.forEach(function(r,i){
       var tr=document.createElement('tr');
+      var sc=sepCls(i);if(sc)tr.className=sc;
+      if(i>0){var al=tbody.lastChild&&tbody.lastChild.classList.contains('alt');tr.classList.toggle('alt',sc?!al:al);}
       var td=document.createElement('td');td.className='no';td.textContent=i+1;tr.appendChild(td);
       for(var c=0;c<4;c++){
-        td=document.createElement('td');
+        td=document.createElement('td');td.className='c'+c;
         var inp=document.createElement('input');
         inp.type='text';inp.inputMode=(c===0)?'text':'decimal';
         inp.value=r[c];inp.dataset.r=i;inp.dataset.c=c;
@@ -155,7 +232,9 @@ button.warn{color:#c0392b;border-color:#e3a39b}
   tbody.addEventListener('keydown',function(ev){
     if(ev.key!=='Enter')return;ev.preventDefault();
     var t=ev.target,i=+t.dataset.r,c=+t.dataset.c;
-    var nx=tbody.querySelector('input[data-r="'+(c<3?i:i+1)+'"][data-c="'+(c<3?c+1:0)+'"]');
+    var nr=c<3?i:i+1,nc=c<3?c+1:0;
+    if(c===3&&state.rows[nr]&&state.rows[nr][0]&&state.rows[nr][1])nc=2;
+    var nx=tbody.querySelector('input[data-r="'+nr+'"][data-c="'+nc+'"]');
     if(nx)nx.focus();else t.blur();
   });
   heads.forEach(function(id){
@@ -167,13 +246,14 @@ button.warn{color:#c0392b;border-color:#e3a39b}
     var n=Math.min(5,MAX-state.rows.length);for(var k=0;k<n;k++)state.rows.push(['','','','']);save();render();
   };
   var msg=document.getElementById('msg'),armed=0;
-  function say(t){msg.textContent=t;}
+  function say(t){msg.textContent=t;var m2=document.getElementById('msg2');if(m2)m2.textContent=t;}
   var clr=document.getElementById('clear');
   clr.onclick=function(){
     if(!armed){armed=1;clr.textContent='もう一度押すと全消去';setTimeout(function(){armed=0;clr.textContent='全消去';},3000);return;}
     armed=0;clr.textContent='全消去';
-    state={h:{h_mdate:today()},rows:[]};for(var i=0;i<INIT;i++)state.rows.push(['','','','']);
-    save();fillHead();render();say('消去しました。');
+    state={h:{h_mdate:today()},tpl:state.tpl,dep:state.dep,rows:makeRows(state.tpl,state.dep)};
+    if(!state.rows.length)for(var i=0;i<INIT;i++)state.rows.push(['','','','']);
+    save();fillHead();fillTpl();render();say('消去しました（調査箇所は残しています）。');
   };
   function table(sep){
     var q=function(v){v=String(v==null?'':v);return (sep===','&&/[",\n]/.test(v))?'"'+v.replace(/"/g,'""')+'"':v.replace(/[\t\n]/g,' ');};
@@ -202,17 +282,18 @@ button.warn{color:#c0392b;border-color:#e3a39b}
   function jd(v){if(!v)return '';var p=v.split('-');return p.length===3?p[0]+'年'+(+p[1])+'月'+(+p[2])+'日':v;}
   function buildSheet(){
     var last=0;state.rows.forEach(function(r,i){if(r.join('')!=='')last=i+1;});
-    var n=Math.min(50,Math.max(10,last));
+    var n=Math.max(10,last),rh=n<=50?15.5:Math.max(11.5,Math.floor(790/n*10)/10),fs=n<=50?11:10;
     var h='<h2>塩分センサ測定電位の換算表（B法）</h2><div class="hd">'+
       '<div class="f"><b>調査名</b>'+esc(state.h.h_name)+'</div>'+
       '<div class="f"><b>調査場所</b>'+esc(state.h.h_place)+'</div>'+
       '<div><b>試料採取日</b>'+esc(jd(state.h.h_sdate))+'</div>'+
       '<div><b>外気温(℃)</b>'+esc(state.h.h_temp)+'</div>'+
       '<div><b>測定日</b>'+esc(jd(state.h.h_mdate))+'</div><div style="border:0"></div></div>'+
-      '<table><thead><tr><th>試験体<br>(No.)</th><th>採取深さ<br>(mm)</th><th>溶液温度<br>(℃)</th><th>電位差<br>(mV)</th><th>モル濃度<br>(mol/l)</th><th>塩化物イオン濃度<br>(kg/m³)</th></tr></thead><tbody>';
+      '<table><colgroup><col style="width:22%"><col style="width:14%"><col style="width:14%"><col style="width:14%"><col style="width:16%"><col style="width:20%"></colgroup><thead><tr><th>試験体<br>(No.)</th><th>採取深さ<br>(mm)</th><th>溶液温度<br>(℃)</th><th>電位差<br>(mV)</th><th>モル濃度<br>(mol/l)</th><th>塩化物イオン濃度<br>(kg/m³)</th></tr></thead><tbody>';
     for(var i=0;i<n;i++){
       var r=state.rows[i]||['','','',''],res=calc(r[2],r[3]);
-      h+='<tr><td>'+esc(r[0])+'</td><td>'+esc(r[1])+'</td><td>'+esc(r[2])+'</td><td>'+esc(r[3])+'</td><td>'+(res?fmt(res.mol,3):'')+'</td><td>'+(res?fmt(res.cl,2):'')+'</td></tr>';
+      var sc=i<state.rows.length?sepCls(i):'';
+      h+='<tr'+(sc?' class="'+sc+'"':'')+' style="height:'+rh+'px;font-size:'+fs+'px"><td style="text-align:left;padding-left:6px">'+esc(r[0])+'</td><td>'+esc(r[1])+'</td><td>'+esc(r[2])+'</td><td>'+esc(r[3])+'</td><td>'+(res?fmt(res.mol,3):'')+'</td><td>'+(res?fmt(res.cl,2):'')+'</td></tr>';
     }
     document.getElementById('sheet').innerHTML=h+'</tbody></table>';
   }
@@ -227,8 +308,86 @@ button.warn{color:#c0392b;border-color:#e3a39b}
     setTimeout(function(){URL.revokeObjectURL(a.href);a.remove();},1000);
   };
 
+  var tT=document.getElementById('tplText'),tD=document.getElementById('tplDepth'),tM=document.getElementById('tplMake'),tArm=0;
+  function fillTpl(){tT.value=state.tpl;tD.value=state.dep;}
+  tT.addEventListener('input',function(){state.tpl=tT.value;save();});
+  tD.addEventListener('input',function(){state.dep=tD.value;save();});
+  tM.onclick=function(){
+    var rows=makeRows(tT.value,tD.value);
+    if(!rows.length){say('調査箇所が入力されていません。');return;}
+    var has=state.rows.some(function(r){return r[2]!==''||r[3]!=='';});
+    if(has&&!tArm){tArm=1;tM.textContent='測定値も消えます。もう一度押すと作成';setTimeout(function(){tArm=0;tM.textContent='この内容で表を作成';},3000);return;}
+    tArm=0;tM.textContent='この内容で表を作成';
+    state.rows=rows;save();render();document.getElementById('tplBox').open=false;
+    say(rows.length+'行を作成しました。');
+  };
+  var PKEY='enbun_b_patterns',LABELS=['健全部','補修部','劣化部','断面修復部','はつり部'];
+  var CIR='①②③④⑤⑥⑦⑧⑨⑩⑪⑫⑬⑭⑮⑯⑰⑱⑲⑳';
+  function pats(){try{return JSON.parse(localStorage.getItem(PKEY))||[];}catch(e){return [];}}
+  function setPats(a){try{localStorage.setItem(PKEY,JSON.stringify(a));}catch(e){}}
+  var patSel=document.getElementById('patSel');
+  function fillPats(){
+    var a=pats();patSel.innerHTML='<option value="">― パターンを選択 ―</option>'+a.map(function(p,i){return '<option value="'+i+'">'+esc(p.name)+'</option>';}).join('');
+  }
+  function setTpl(v){tT.value=v;state.tpl=v;save();}
+  function lines(){return tT.value.replace(/\s+$/,'').split(/\r?\n/);}
+  function addGroup(){
+    var pre=document.getElementById('qPre').value.trim(),ls=lines().filter(function(l){return l.trim();}),n=1;
+    ls.forEach(function(l){var m=l.match(/^(.*?)(\d+)[：:]/);if(m&&m[1]===pre)n=Math.max(n,+m[2]+1);});
+    ls.push(pre+n+'：');setTpl(ls.join('\n'));
+  }
+  function addLabel(lb){
+    lb=lb.trim();if(!lb)return;
+    var ls=lines();if(!ls.length||!ls[ls.length-1].trim()){addGroup();ls=lines();}
+    var last=ls[ls.length-1],m=last.match(/^(.+?[：:])(.*)$/),head=m?m[1]:'',items=split(m?m[2]:last);
+    var same=items.filter(function(x){return x===lb||(x.indexOf(lb)===0&&CIR.indexOf(x.slice(lb.length))>=0&&x.length===lb.length+1);});
+    if(same.length===0)items.push(lb);
+    else{
+      if(same.length===1&&items.indexOf(lb)>=0)items[items.indexOf(lb)]=lb+CIR[0];
+      items.push(lb+(CIR[same.length]||('('+(same.length+1)+')')));
+    }
+    ls[ls.length-1]=head+items.join('、');setTpl(ls.join('\n'));
+  }
+  function undo(){
+    var ls=lines();if(!ls.length)return;
+    var last=ls[ls.length-1],m=last.match(/^(.+?[：:])(.*)$/);
+    if(m&&split(m[2]).length){var it=split(m[2]);var rm=it.pop();
+      if(it.length){var b=rm.slice(0,-1);var rest=it.filter(function(x){return x.indexOf(b)===0&&x.length===b.length+1&&CIR.indexOf(x.slice(-1))>=0;});
+        if(rest.length===1&&rm.slice(-1)===CIR[1])it[it.indexOf(rest[0])]=b;}
+      ls[ls.length-1]=m[1]+it.join('、');}
+    else ls.pop();
+    setTpl(ls.join('\n'));
+  }
+  var qL=document.getElementById('qLabels');
+  qL.innerHTML=LABELS.map(function(l){return '<button data-l="'+l+'">'+l+'</button>';}).join('');
+  qL.onclick=function(e){var b=e.target.closest('button');if(b)addLabel(b.dataset.l);};
+  document.getElementById('qGrp').onclick=addGroup;
+  document.getElementById('qUndo').onclick=undo;
+  document.getElementById('qCustomAdd').onclick=function(){var c=document.getElementById('qCustom');addLabel(c.value);c.value='';};
+  document.getElementById('dMake').onclick=function(){
+    var a=num(document.getElementById('dS').value),p=num(document.getElementById('dP').value),n=num(document.getElementById('dN').value);
+    if(a===null||!p||!n||n<1){say('深度の開始・ピッチ・段数を入力してください。');return;}
+    var r=[];for(var i=0;i<Math.min(20,n);i++)r.push((a+p*i)+'～'+(a+p*(i+1)));
+    tD.value=r.join('、');state.dep=tD.value;save();
+  };
+  document.getElementById('patSave').onclick=function(){
+    var nm=(state.h.h_name||'').trim()||('パターン'+(pats().length+1));
+    var a=pats(),i=a.findIndex(function(p){return p.name===nm;});
+    var p={name:nm,tpl:tT.value,dep:tD.value};if(i>=0)a[i]=p;else a.push(p);
+    setPats(a);fillPats();say('「'+nm+'」として保存しました（調査名が名前になります）。');
+  };
+  document.getElementById('patLoad').onclick=function(){
+    var p=pats()[patSel.value];if(!p){say('パターンを選んでください。');return;}
+    setTpl(p.tpl);tD.value=p.dep;state.dep=p.dep;save();say('「'+p.name+'」を呼び出しました。「この内容で表を作成」で表に反映します。');
+  };
+  var pdArm=0,pdB=document.getElementById('patDel');
+  pdB.onclick=function(){
+    var i=patSel.value;if(i===''){say('パターンを選んでください。');return;}
+    if(!pdArm){pdArm=1;pdB.textContent='もう一度で削除';setTimeout(function(){pdArm=0;pdB.textContent='削除';},3000);return;}
+    pdArm=0;pdB.textContent='削除';var a=pats();a.splice(+i,1);setPats(a);fillPats();say('削除しました。');
+  };
   function fillHead(){heads.forEach(function(id){document.getElementById(id).value=state.h[id]||'';});}
-  load();fillHead();render();save();
+  load();fillHead();fillTpl();fillPats();render();save();
 })();
 </script>
 </body>
