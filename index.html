@@ -195,10 +195,11 @@ table.xt tr.gg td{border-top:3px double var(--xk)}
     </table>
     <div class="btns">
       <button id="addRow">＋ 行を追加</button>
+      <button id="imp">読み込み</button>
+      <input id="impFile" type="file" accept=".csv,.xlsx,text/csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" hidden>
       <button id="xlsx">Excel保存</button>
       <button id="csv">CSV保存</button>
       <button class="pri" id="pdf">印刷（A4）</button>
-      <button id="copy">表をコピー（Excelに貼付け可）</button>
       <button class="warn" id="clear">全消去</button>
     </div>
     <div class="pready" id="pReady" hidden>
@@ -347,12 +348,6 @@ table.xt tr.gg td{border-top:3px double var(--xk)}
     });
     return L.map(function(a){return a.map(q).join(sep);}).join('\r\n');
   }
-  document.getElementById('copy').onclick=function(){
-    var t=table('\t');
-    function fb(){var ta=document.createElement('textarea');ta.value=t;ta.style.position='fixed';ta.style.opacity='0';document.body.appendChild(ta);ta.select();
-      var ok=false;try{ok=document.execCommand('copy');}catch(e){}ta.remove();say(ok?'コピーしました。Excelのセルに貼り付けてください。':'コピーできませんでした。');}
-    try{navigator.clipboard.writeText(t).then(function(){say('コピーしました。Excelのセルに貼り付けてください。');},fb);}catch(e){fb();}
-  };
   var csvBtn=document.getElementById('csv');
   var pdfBtn=document.getElementById('pdf');
   function esc(v){return String(v==null?'':v).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];});}
@@ -474,6 +469,110 @@ table.xt tr.gg td{border-top:3px double var(--xk)}
       return wb.xlsx.writeBuffer();
     }).then(function(buf){return new Blob([buf],{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'});});
   }
+  /* ---- import ---- */
+  function ymd(d){return d.getUTCFullYear()+'-'+('0'+(d.getUTCMonth()+1)).slice(-2)+'-'+('0'+d.getUTCDate()).slice(-2);}
+  function normDate(v){
+    if(v instanceof Date&&!isNaN(v))return ymd(v);
+    v=String(v||'').trim();if(!v)return '';
+    var m=v.match(/^(\d{4})[\/\-.年](\d{1,2})[\/\-.月](\d{1,2})/);
+    return m?m[1]+'-'+('0'+m[2]).slice(-2)+'-'+('0'+m[3]).slice(-2):'';
+  }
+  function cellText(v){
+    if(v==null)return '';
+    if(v instanceof Date)return v;
+    if(typeof v==='object'){
+      if(v.richText)return v.richText.map(function(t){return t.text;}).join('');
+      if('result' in v)return cellText(v.result);
+      if(v.text!=null)return String(v.text);
+      if(v.error)return '';
+      return '';
+    }
+    return v;
+  }
+  var LABS={'調査名':'h_name','調査場所':'h_place','試料採取日':'h_sdate','外気温(℃)':'h_temp','外気温（℃）':'h_temp','測定日':'h_mdate'};
+  var SKIP=/^(入力セル|計算結果)$/;
+  function fromGrid(g){
+    var h={},hr=-1,hc=-1;
+    for(var r=0;r<g.length;r++){
+      var row=g[r]||[];
+      for(var c=0;c<row.length;c++){
+        var t=row[c];if(t instanceof Date)continue;t=String(t==null?'':t).replace(/\s+/g,'');
+        if(LABS[t]&&h[LABS[t]]==null){
+          var v=row[c+1];h[LABS[t]]=(v==null||(typeof v==='string'&&LABS[v.replace(/\s+/g,'')]))?'':v;
+        }
+        if(hr<0&&t.indexOf('試験体')===0){hr=r;hc=c;}
+      }
+    }
+    if(hr<0)return null;
+    var rows=[];
+    for(var r2=hr+1;r2<g.length;r2++){
+      var a=g[r2]||[],v4=[0,1,2,3].map(function(k){var v=a[hc+k];return v==null?'':(v instanceof Date?ymd(v):String(v).trim());});
+      if(v4[0].indexOf('(No')===0||v4[0].indexOf('（No')===0)continue;
+      if(v4.some(function(x){return SKIP.test(x);}))continue;
+      rows.push(v4);
+    }
+    while(rows.length&&rows[rows.length-1].join('')==='')rows.pop();
+    while(rows.length&&rows[0].join('')==='')rows.shift();
+    ['h_sdate','h_mdate'].forEach(function(k){if(h[k]!=null)h[k]=normDate(h[k]);});
+    ['h_name','h_place','h_temp'].forEach(function(k){if(h[k]!=null)h[k]=String(h[k] instanceof Date?ymd(h[k]):h[k]).trim();});
+    return {h:h,rows:rows.slice(0,MAX)};
+  }
+  function parseCsv(t){
+    var out=[],row=[],f='',q=false;
+    for(var i=0;i<t.length;i++){var ch=t[i];
+      if(q){if(ch==='"'){if(t[i+1]==='"'){f+='"';i++;}else q=false;}else f+=ch;}
+      else if(ch==='"')q=true;else if(ch===','){row.push(f);f='';}
+      else if(ch==='\n'||ch==='\r'){if(ch==='\r'&&t[i+1]==='\n')i++;row.push(f);out.push(row);row=[];f='';}
+      else f+=ch;}
+    if(f!==''||row.length){row.push(f);out.push(row);}
+    return out;
+  }
+  function readCsv(file){
+    return file.arrayBuffer().then(function(b){
+      var t;try{t=new TextDecoder('utf-8',{fatal:true}).decode(b);}catch(e){t=new TextDecoder('shift_jis').decode(b);}
+      return parseCsv(t.replace(/^\ufeff/,''));
+    });
+  }
+  function readXlsx(file){
+    var ld=window.ExcelJS?Promise.resolve():loadJs('https://cdn.jsdelivr.net/npm/exceljs@4.4.0/dist/exceljs.min.js');
+    return ld.then(function(){return file.arrayBuffer();}).then(function(b){
+      var wb=new window.ExcelJS.Workbook();return wb.xlsx.load(b).then(function(){
+        var best=null;
+        wb.eachSheet(function(ws){
+          if(best)return;var g=[];
+          ws.eachRow({includeEmpty:true},function(row,rn){var a=[];row.eachCell({includeEmpty:true},function(c,cn){a[cn-1]=c.isMerged&&c.master!==c?'':cellText(c.value);});g[rn-1]=a;});
+          for(var i=0;i<g.length;i++)if(!g[i])g[i]=[];
+          if(fromGrid(g))best=g;
+        });
+        return best||[];
+      });
+    });
+  }
+  var impBtn=document.getElementById('imp'),impFile=document.getElementById('impFile'),impArm=0,impData=null;
+  impBtn.onclick=function(){
+    if(impArm&&impData){applyImport();return;}
+    impFile.value='';impFile.click();
+  };
+  function applyImport(){
+    var d=impData;impArm=0;impData=null;impBtn.textContent='読み込み';
+    Object.keys(d.h).forEach(function(k){state.h[k]=d.h[k];});
+    state.rows=d.rows.length?d.rows:state.rows;
+    save();fillHead();render();say(d.rows.length+'行を読み込みました。');
+  }
+  impFile.onchange=function(){
+    var f=impFile.files&&impFile.files[0];if(!f)return;
+    var isX=/\.xlsx$/i.test(f.name);say('読み込み中…');
+    (isX?readXlsx(f):readCsv(f)).then(function(g){
+      var d=fromGrid(g);
+      if(!d||!d.rows.length){say('このファイルからは表を読み取れませんでした（「試験体」の見出しが必要です）。');return;}
+      impData=d;
+      var has=state.rows.some(function(r){return r[2]!==''||r[3]!=='';});
+      if(!has){applyImport();return;}
+      impArm=1;impBtn.textContent='上書きして読み込む';
+      say('今の入力内容は「'+f.name+'」の内容に置き換わります。よければ「上書きして読み込む」を押してください。');
+      setTimeout(function(){if(impArm){impArm=0;impData=null;impBtn.textContent='読み込み';}},15000);
+    },function(){say('読み込みに失敗しました。'+(isX?'ネット接続を確認してください。':''));});
+  };
   var xBtn=document.getElementById('xlsx');
   xBtn.onclick=function(){
     hideReady();xBtn.disabled=true;say('Excelファイルを作成中…');
