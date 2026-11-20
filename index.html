@@ -67,6 +67,10 @@ tr.alt td.c0 input,tr.alt td.c1 input{background:#f3f0c8}
 #sheet th,#sheet td{border:1px solid #333;text-align:center;padding:0 3px;background:none}
 #sheet tr.gs td{border-top:1.5px solid #000}#sheet tr.gg td{border-top:3px double #000}
 #sheet th{background:#eee;font-size:10px;height:auto;padding:4px 2px;line-height:1.3}
+.pready{display:flex;flex-wrap:wrap;align-items:center;gap:10px;margin-top:12px;padding:12px;border:2px solid #2f6fdb;border-radius:10px;background:#eef4ff}
+.pready[hidden]{display:none}
+.pready span{font-weight:600}
+.pready a{display:inline-flex;align-items:center;min-height:44px;padding:0 14px;border:1px solid #bbb;border-radius:10px;background:#fff;color:#1d1d1f;text-decoration:none;font-size:16px}
 /* Excel-style sheet */
 :root{--xf:-apple-system,"Hiragino Sans","Hiragino Kaku Gothic ProN","Yu Gothic",sans-serif;--xl:#8c8c8c;--xk:#000}
 .xh{display:grid;grid-template-columns:minmax(0,1.25fr) minmax(0,1fr);gap:16px;align-items:start}
@@ -178,6 +182,12 @@ table.xt tr.gg td{border-top:3px double var(--xk)}
       <button class="pri" id="pdf">印刷（A4）</button>
       <button id="copy">表をコピー（Excelに貼付け可）</button>
       <button class="warn" id="clear">全消去</button>
+    </div>
+    <div class="pready" id="pReady" hidden>
+      <span>印刷用PDFができました</span>
+      <button class="pri" id="pShare">共有して印刷</button>
+      <a id="pOpen" href="#" target="_blank" rel="noopener">PDFを表示</a>
+      <button id="pClose">閉じる</button>
     </div>
     <p class="note" id="msg" aria-live="polite"></p>
   </div>
@@ -364,21 +374,31 @@ table.xt tr.gg td{border-top:3px double var(--xk)}
       return doc.output('blob');
     });
   }
+  var pReady=document.getElementById('pReady'),pShare=document.getElementById('pShare'),pOpen=document.getElementById('pOpen'),pFile=null,pUrl=null;
+  function hideReady(){pReady.hidden=true;if(pUrl){URL.revokeObjectURL(pUrl);pUrl=null;}pFile=null;}
+  document.getElementById('pClose').onclick=function(){hideReady();say('');};
   pdfBtn.onclick=function(){
     if(!isIOS()&&!inFrame()){buildSheet();window.print();return;}
-    pdfBtn.disabled=true;say('印刷用PDFを作成中…');
+    hideReady();pdfBtn.disabled=true;say('印刷用PDFを作成中…');
     makePdf().then(function(blob){
-      var name=pdfName(),f=null;try{f=new File([blob],name,{type:'application/pdf'});}catch(e){}
-      if(f&&navigator.canShare&&navigator.canShare({files:[f]})){
-        say('共有メニューから「プリント」を選んでください。');
-        return navigator.share({files:[f]}).catch(function(e){if(e&&e.name!=='AbortError')say('共有できませんでした。');});
-      }
-      var u=URL.createObjectURL(blob),a=document.createElement('a');a.href=u;a.download=name;a.target='_blank';
-      document.body.appendChild(a);a.click();a.remove();setTimeout(function(){URL.revokeObjectURL(u);},60000);
-      say('PDFを開きました。共有ボタンから「プリント」を選んでください。');
+      var name=pdfName();
+      try{pFile=new File([blob],name,{type:'application/pdf'});}catch(e){pFile=null;}
+      pUrl=URL.createObjectURL(blob);pOpen.href=pUrl;
+      pShare.hidden=!(pFile&&navigator.canShare&&navigator.canShare({files:[pFile]}));
+      pReady.hidden=false;
+      say(pShare.hidden?'「PDFを表示」を押し、画面の共有ボタンから「プリント」を選んでください。':'「共有して印刷」を押し、共有メニューから「プリント」を選んでください。');
+      pReady.scrollIntoView({block:'center',behavior:'smooth'});
     },function(){say('PDFを作成できませんでした。ネット接続を確認してください。');})
     .then(function(){pdfBtn.disabled=false;});
   };
+  pShare.onclick=function(){
+    if(!pFile)return;
+    navigator.share({files:[pFile]}).then(function(){say('');},function(e){
+      if(e&&e.name==='AbortError')return;
+      say('共有メニューを開けませんでした。「PDFを表示」から印刷してください。');
+    });
+  };
+
   window.addEventListener('beforeprint',buildSheet);
   csvBtn.onclick=function(){
     var name='塩分換算B法_'+(state.h.h_name||'無題')+'_'+(state.h.h_mdate||today())+'.csv';
