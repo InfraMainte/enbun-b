@@ -65,8 +65,39 @@ tr.alt td.c0 input,tr.alt td.c1 input{background:#f3f0c8}
 #sheet .hd .f{grid-column:1/-1}
 #sheet table{width:100%;border-collapse:collapse;font-size:11px;table-layout:fixed}
 #sheet th,#sheet td{border:1px solid #333;text-align:center;padding:0 3px;background:none}
-#sheet tr.gs td{border-top:1.5px solid #000}#sheet tr.gg td{border-top:2.5px solid #000}
+#sheet tr.gs td{border-top:1.5px solid #000}#sheet tr.gg td{border-top:3px double #000}
 #sheet th{background:#eee;font-size:10px;height:auto;padding:4px 2px;line-height:1.3}
+/* Excel-style sheet */
+:root{--xf:-apple-system,"Hiragino Sans","Hiragino Kaku Gothic ProN","Yu Gothic",sans-serif;--xl:#8c8c8c;--xk:#000}
+.xh{display:grid;grid-template-columns:minmax(0,1.25fr) minmax(0,1fr);gap:16px;align-items:start}
+.xb{border-collapse:collapse;width:100%;font-family:var(--xf);font-size:15px}
+.xb th,.xb td{border:1px solid var(--xk);padding:0;height:34px}
+.xb th{background:#fff;font-weight:400;text-align:left;padding:0 8px;width:6.5em;white-space:nowrap}
+.xb td input{width:100%;height:33px;border:0;border-radius:0;background:var(--in);font:inherit;font-size:16px;padding:0 8px;min-height:0}
+.xb.l td input{text-align:center}
+.bar{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:8px;margin-bottom:8px}
+.bar .legend{margin:0}
+.sepl{font-size:13px;color:var(--sub);display:flex;align-items:center;gap:6px}
+.sepl select{font-size:16px;padding:6px 8px;border:1px solid #bbb;border-radius:8px;min-height:40px;background:#fff}
+table.xt{font-family:var(--xf);font-size:15px;border:2px solid var(--xk);table-layout:fixed}
+table.xt col.cn{width:38px}
+table.xt th,table.xt td{border:1px solid var(--xl)}
+table.xt thead th{background:#fff;border-bottom:2px solid var(--xk);font-weight:400;font-size:13px;color:var(--xk);padding:6px 2px}
+table.xt td.no{font-family:-apple-system,sans-serif;font-size:11px;background:#f2f2f2;color:#888}
+table.xt td input{font:inherit;font-size:16px;min-height:0;height:34px;padding:0 6px}
+table.xt td.c0 input{text-align:left;min-width:0}
+table.xt td.c1 input{text-align:center}
+table.xt td.c2 input,table.xt td.c3 input{text-align:right;padding-right:10px}
+table.xt td.c0,table.xt td.c1{border-right:1px solid var(--xl)}
+table.xt td.c0 input,table.xt td.c1 input{background:#fff}
+table.xt td.calc{padding:0 6px;height:35px;text-align:center}
+table.xt td.res{background:#fff3cc;font-weight:400}
+table.xt td.res.has{background:var(--out)}
+table.xt td.c0{min-width:0}
+tr.alt td.c0 input,tr.alt td.c1 input{background:#fff}
+table.xt tr.gs td{border-top:2px solid var(--xk)}
+table.xt tr.gg td{border-top:3px double var(--xk)}
+@media (max-width:640px){.xh{grid-template-columns:1fr}table.xt{font-size:13px}table.xt col.cn{width:28px}table.xt td input{font-size:16px;padding:0 3px}}
 </style>
 </head>
 <body>
@@ -74,12 +105,16 @@ tr.alt td.c0 input,tr.alt td.c1 input{background:#f3f0c8}
   <h1>塩分センサ測定電位の換算表（B法）</h1>
 
   <div class="card">
-    <div class="head">
-      <label class="full">調査名<input id="h_name" type="text"></label>
-      <label class="full">調査場所<input id="h_place" type="text"></label>
-      <label>試料採取日<input id="h_sdate" type="date"></label>
-      <label>外気温(℃)<input id="h_temp" type="text" inputmode="decimal"></label>
-      <label>測定日<input id="h_mdate" type="date"></label>
+    <div class="xh">
+      <table class="xb l">
+        <tr><th>調査名</th><td><input id="h_name" type="text"></td></tr>
+        <tr><th>調査場所</th><td><input id="h_place" type="text"></td></tr>
+      </table>
+      <table class="xb r">
+        <tr><th>試料採取日</th><td><input id="h_sdate" type="date"></td></tr>
+        <tr><th>外気温(℃)</th><td><input id="h_temp" type="text" inputmode="decimal"></td></tr>
+        <tr><th>測定日</th><td><input id="h_mdate" type="date"></td></tr>
+      </table>
     </div>
   </div>
 
@@ -120,8 +155,18 @@ tr.alt td.c0 input,tr.alt td.c1 input{background:#f3f0c8}
   </div>
 
   <div class="card">
-    <div class="legend"><span class="i">入力セル</span><span class="o">計算結果</span></div>
-    <table>
+    <div class="bar">
+      <div class="legend"><span class="i">入力セル</span><span class="o">計算結果</span></div>
+      <label class="sepl">区切り線
+        <select id="sepSel">
+          <option value="auto">箇所ごと（自動）</option>
+          <option value="2">2深度ごと</option><option value="3">3深度ごと</option>
+          <option value="4">4深度ごと</option><option value="5">5深度ごと</option>
+          <option value="6">6深度ごと</option><option value="0">なし</option>
+        </select></label>
+    </div>
+    <table class="xt">
+      <colgroup><col class="cn"><col style="width:22%"><col style="width:13%"><col style="width:13%"><col style="width:13%"><col style="width:14%"><col style="width:17%"></colgroup>
       <thead><tr>
         <th></th><th>試験体<br>(No.)</th><th>採取深さ<br>(mm)</th><th>溶液温度<br>(℃)</th><th>電位差<br>(mV)</th><th>モル濃度<br>(mol/l)</th><th>塩化物イオン濃度<br>(kg/m³)</th>
       </tr></thead>
@@ -181,8 +226,12 @@ tr.alt td.c0 input,tr.alt td.c1 input{background:#f3f0c8}
   }
   function grp(v){return String(v).split(' ')[0];}
   function sepCls(i){
-    if(i===0)return '';var a=state.rows[i-1][0],b=state.rows[i][0];
-    if(!a||!b||a===b)return '';return grp(a)!==grp(b)?'gg':'gs';
+    if(i===0)return '';var a=state.rows[i-1][0],b=state.rows[i][0],m=state.sep||'auto';
+    if(m==='0')return '';
+    var gChange=a&&b&&grp(a)!==grp(b);
+    if(m==='auto'){if(!a||!b||a===b)return '';return gChange?'gg':'gs';}
+    var n=+m;if(i%n===0)return gChange?'gg':'gs';
+    return '';
   }
   function save(){try{localStorage.setItem(KEY,JSON.stringify(state));}catch(e){}}
   function today(){var d=new Date();return d.getFullYear()+'-'+('0'+(d.getMonth()+1)).slice(-2)+'-'+('0'+d.getDate()).slice(-2);}
@@ -251,7 +300,7 @@ tr.alt td.c0 input,tr.alt td.c1 input{background:#f3f0c8}
   clr.onclick=function(){
     if(!armed){armed=1;clr.textContent='もう一度押すと全消去';setTimeout(function(){armed=0;clr.textContent='全消去';},3000);return;}
     armed=0;clr.textContent='全消去';
-    state={h:{h_mdate:today()},tpl:state.tpl,dep:state.dep,rows:makeRows(state.tpl,state.dep)};
+    state={h:{h_mdate:today()},sep:state.sep,tpl:state.tpl,dep:state.dep,rows:makeRows(state.tpl,state.dep)};
     if(!state.rows.length)for(var i=0;i<INIT;i++)state.rows.push(['','','','']);
     save();fillHead();fillTpl();render();say('消去しました（調査箇所は残しています）。');
   };
@@ -297,7 +346,39 @@ tr.alt td.c0 input,tr.alt td.c1 input{background:#f3f0c8}
     }
     document.getElementById('sheet').innerHTML=h+'</tbody></table>';
   }
-  pdfBtn.onclick=function(){buildSheet();window.print();};
+  function isIOS(){return /iPad|iPhone|iPod/.test(navigator.userAgent)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1);}
+  function inFrame(){try{return window.self!==window.top;}catch(e){return true;}}
+  function loadJs(src){return new Promise(function(ok,ng){var t=document.createElement('script');t.src=src;t.onload=ok;t.onerror=ng;document.head.appendChild(t);});}
+  function libs(){
+    var a=window.html2canvas?Promise.resolve():loadJs('https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js');
+    return a.then(function(){return window.jspdf?0:loadJs('https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js');});
+  }
+  function pdfName(){return '塩分換算B法_'+(state.h.h_name||'無題')+'_'+(state.h.h_mdate||today())+'.pdf';}
+  function makePdf(){
+    buildSheet();
+    return libs().then(function(){
+      return html2canvas(document.getElementById('sheet'),{scale:2.5,backgroundColor:'#fff',logging:false});
+    }).then(function(cv){
+      var doc=new window.jspdf.jsPDF({unit:'mm',format:'a4',orientation:'portrait'});
+      doc.addImage(cv.toDataURL('image/jpeg',0.92),'JPEG',0,0,210,297);
+      return doc.output('blob');
+    });
+  }
+  pdfBtn.onclick=function(){
+    if(!isIOS()&&!inFrame()){buildSheet();window.print();return;}
+    pdfBtn.disabled=true;say('印刷用PDFを作成中…');
+    makePdf().then(function(blob){
+      var name=pdfName(),f=null;try{f=new File([blob],name,{type:'application/pdf'});}catch(e){}
+      if(f&&navigator.canShare&&navigator.canShare({files:[f]})){
+        say('共有メニューから「プリント」を選んでください。');
+        return navigator.share({files:[f]}).catch(function(e){if(e&&e.name!=='AbortError')say('共有できませんでした。');});
+      }
+      var u=URL.createObjectURL(blob),a=document.createElement('a');a.href=u;a.download=name;a.target='_blank';
+      document.body.appendChild(a);a.click();a.remove();setTimeout(function(){URL.revokeObjectURL(u);},60000);
+      say('PDFを開きました。共有ボタンから「プリント」を選んでください。');
+    },function(){say('PDFを作成できませんでした。ネット接続を確認してください。');})
+    .then(function(){pdfBtn.disabled=false;});
+  };
   window.addEventListener('beforeprint',buildSheet);
   csvBtn.onclick=function(){
     var name='塩分換算B法_'+(state.h.h_name||'無題')+'_'+(state.h.h_mdate||today())+'.csv';
@@ -387,7 +468,10 @@ tr.alt td.c0 input,tr.alt td.c1 input{background:#f3f0c8}
     pdArm=0;pdB.textContent='削除';var a=pats();a.splice(+i,1);setPats(a);fillPats();say('削除しました。');
   };
   function fillHead(){heads.forEach(function(id){document.getElementById(id).value=state.h[id]||'';});}
-  load();fillHead();fillTpl();fillPats();render();save();
+  var sepSel=document.getElementById('sepSel');
+  load();sepSel.value=state.sep||'auto';
+  sepSel.onchange=function(){state.sep=sepSel.value;save();render();};
+  fillHead();fillTpl();fillPats();render();save();
 })();
 </script>
 </body>
