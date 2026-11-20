@@ -57,16 +57,27 @@ tr.alt td.c0 input,tr.alt td.c1 input{background:#f3f0c8}
   #sheet{position:static!important;left:auto!important;width:210mm!important;height:auto!important;padding:10mm 13mm!important}
   #sheet h2{margin-bottom:12px!important}
 }
-#sheet{position:fixed;left:-10000px;top:0;width:794px;height:1123px;background:#fff;color:#000;padding:48px 52px;font-family:-apple-system,"Hiragino Sans","Hiragino Kaku Gothic ProN","Yu Gothic",sans-serif}
-#sheet h2{font-size:18px;text-align:center;margin:0 0 18px;letter-spacing:.05em}
-#sheet .hd{display:grid;grid-template-columns:1fr 1fr;gap:6px 24px;font-size:12px;margin-bottom:14px}
-#sheet .hd div{display:flex;border-bottom:1px solid #555;padding:3px 0}
-#sheet .hd b{font-weight:600;width:6.5em;flex:none}
-#sheet .hd .f{grid-column:1/-1}
-#sheet table{width:100%;border-collapse:collapse;font-size:11px;table-layout:fixed}
-#sheet th,#sheet td{border:1px solid #333;text-align:center;padding:0 3px;background:none}
-#sheet tr.gs td{border-top:1.5px solid #000}#sheet tr.gg td{border-top:3px double #000}
-#sheet th{background:#eee;font-size:10px;height:auto;padding:4px 2px;line-height:1.3}
+#sheet{position:fixed;left:-10000px;top:0;width:794px;height:1123px;background:#fff;color:#000;padding:44px 48px;font-family:-apple-system,"Hiragino Sans","Hiragino Kaku Gothic ProN","Yu Gothic",sans-serif;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+#sheet *{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+#sheet h2{font-size:18px;text-align:center;margin:0 0 14px;letter-spacing:.05em}
+#sheet .hx{display:grid;grid-template-columns:1.25fr 1fr;gap:16px;align-items:start;margin-bottom:12px}
+#sheet .hx table{width:100%;border-collapse:collapse;font-size:11px}
+#sheet .hx th,#sheet .hx td{border:1px solid #000;height:20px;padding:0 6px}
+#sheet .hx th{font-size:11px;font-weight:400;text-align:left;width:6.5em;white-space:nowrap;background:#fff}
+#sheet .hx td{background:#ffffcc}
+#sheet .hx .l td{text-align:center}
+#sheet table.dt{width:100%;border-collapse:collapse;font-size:11px;table-layout:fixed;border:2px solid #000}
+#sheet .dt th,#sheet .dt td{border:1px solid #8c8c8c;text-align:center;padding:0 4px}
+#sheet .dt th{background:#fff;font-weight:400;font-size:10px;padding:4px 2px;line-height:1.3;border-bottom:2px solid #000}
+#sheet .dt td.a{text-align:left;padding-left:6px}
+#sheet .dt td.i{background:#ffffcc;text-align:right;padding-right:8px}
+#sheet .dt td.o{background:#fff3cc}
+#sheet .dt td.o.h{background:#ffc000}
+#sheet .dt tr.gs td{border-top:2px solid #000}
+#sheet .dt tr.gg td{border-top:3px double #000}
+#sheet .lg{display:flex;justify-content:flex-end;gap:14px;font-size:9px;color:#444;margin-top:6px}
+#sheet .lg span::before{content:"";display:inline-block;width:10px;height:10px;margin-right:4px;vertical-align:-1px;border:1px solid #888}
+#sheet .lg .i::before{background:#ffffcc}#sheet .lg .o::before{background:#ffc000}
 .pready{display:flex;flex-wrap:wrap;align-items:center;gap:10px;margin-top:12px;padding:12px;border:2px solid #2f6fdb;border-radius:10px;background:#eef4ff}
 .pready[hidden]{display:none}
 .pready span{font-weight:600}
@@ -79,6 +90,12 @@ tr.alt td.c0 input,tr.alt td.c1 input{background:#f3f0c8}
 .xb th{background:#fff;font-weight:400;text-align:left;padding:0 8px;width:6.5em;white-space:nowrap}
 .xb td input{width:100%;height:33px;border:0;border-radius:0;background:var(--in);font:inherit;font-size:16px;padding:0 8px;min-height:0}
 .xb.l td input{text-align:center}
+.xb{table-layout:fixed}
+.xb th{width:7em}
+.xb td{overflow:hidden}
+.xb td input[type=date]{-webkit-appearance:none;appearance:none;display:block;min-width:0;max-width:100%;width:100%;text-align:center;line-height:33px}
+.xb td input[type=date]::-webkit-date-and-time-value{text-align:center;margin:0}
+.xb td input[type=date]::-webkit-calendar-picker-indicator{margin:0}
 .bar{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:8px;margin-bottom:8px}
 .bar .legend{margin:0}
 .sepl{font-size:13px;color:var(--sub);display:flex;align-items:center;gap:6px}
@@ -341,20 +358,17 @@ table.xt tr.gg td{border-top:3px double var(--xk)}
   function jd(v){if(!v)return '';var p=v.split('-');return p.length===3?p[0]+'年'+(+p[1])+'月'+(+p[2])+'日':v;}
   function buildSheet(){
     var last=0;state.rows.forEach(function(r,i){if(r.join('')!=='')last=i+1;});
-    var n=Math.max(10,last),rh=n<=50?15.5:Math.max(11.5,Math.floor(790/n*10)/10),fs=n<=50?11:10;
-    var h='<h2>塩分センサ測定電位の換算表（B法）</h2><div class="hd">'+
-      '<div class="f"><b>調査名</b>'+esc(state.h.h_name)+'</div>'+
-      '<div class="f"><b>調査場所</b>'+esc(state.h.h_place)+'</div>'+
-      '<div><b>試料採取日</b>'+esc(jd(state.h.h_sdate))+'</div>'+
-      '<div><b>外気温(℃)</b>'+esc(state.h.h_temp)+'</div>'+
-      '<div><b>測定日</b>'+esc(jd(state.h.h_mdate))+'</div><div style="border:0"></div></div>'+
-      '<table><colgroup><col style="width:22%"><col style="width:14%"><col style="width:14%"><col style="width:14%"><col style="width:16%"><col style="width:20%"></colgroup><thead><tr><th>試験体<br>(No.)</th><th>採取深さ<br>(mm)</th><th>溶液温度<br>(℃)</th><th>電位差<br>(mV)</th><th>モル濃度<br>(mol/l)</th><th>塩化物イオン濃度<br>(kg/m³)</th></tr></thead><tbody>';
+    var n=Math.max(10,last),rh=n<=50?15.5:Math.max(11.5,Math.floor(760/n*10)/10),fs=n<=50?11:10;
+    var h='<h2>塩分センサ測定電位の換算表（B法）</h2><div class="hx">'+
+      '<table class="l"><tr><th>調査名</th><td>'+esc(state.h.h_name)+'</td></tr><tr><th>調査場所</th><td>'+esc(state.h.h_place)+'</td></tr></table>'+
+      '<table><tr><th>試料採取日</th><td>'+esc(jd(state.h.h_sdate))+'</td></tr><tr><th>外気温(℃)</th><td>'+esc(state.h.h_temp)+'</td></tr><tr><th>測定日</th><td>'+esc(jd(state.h.h_mdate))+'</td></tr></table></div>'+
+      '<table class="dt"><colgroup><col style="width:22%"><col style="width:13%"><col style="width:13%"><col style="width:13%"><col style="width:16%"><col style="width:23%"></colgroup><thead><tr><th>試験体<br>(No.)</th><th>採取深さ<br>(mm)</th><th>溶液温度<br>(℃)</th><th>電位差<br>(mV)</th><th>モル濃度<br>(mol/l)</th><th>塩化物イオン濃度<br>(kg/m³)</th></tr></thead><tbody>';
     for(var i=0;i<n;i++){
       var r=state.rows[i]||['','','',''],res=calc(r[2],r[3]);
       var sc=i<state.rows.length?sepCls(i):'';
-      h+='<tr'+(sc?' class="'+sc+'"':'')+' style="height:'+rh+'px;font-size:'+fs+'px"><td style="text-align:left;padding-left:6px">'+esc(r[0])+'</td><td>'+esc(r[1])+'</td><td>'+esc(r[2])+'</td><td>'+esc(r[3])+'</td><td>'+(res?fmt(res.mol,3):'')+'</td><td>'+(res?fmt(res.cl,2):'')+'</td></tr>';
+      h+='<tr'+(sc?' class="'+sc+'"':'')+' style="height:'+rh+'px;font-size:'+fs+'px"><td class="a">'+esc(r[0])+'</td><td>'+esc(r[1])+'</td><td class="i">'+esc(r[2])+'</td><td class="i">'+esc(r[3])+'</td><td>'+(res?fmt(res.mol,3):'')+'</td><td class="o'+(res?' h':'')+'">'+(res?fmt(res.cl,2):'')+'</td></tr>';
     }
-    document.getElementById('sheet').innerHTML=h+'</tbody></table>';
+    document.getElementById('sheet').innerHTML=h+'</tbody></table><div class="lg"><span class="i">入力セル</span><span class="o">計算結果</span></div>';
   }
   function isIOS(){return /iPad|iPhone|iPod/.test(navigator.userAgent)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1);}
   function inFrame(){try{return window.self!==window.top;}catch(e){return true;}}
